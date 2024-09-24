@@ -12,6 +12,7 @@ import (
 type Buffer struct {
 	Buf []byte
 	net.Buffers
+	EnableWritev bool
 }
 
 // Reader returns new *Reader from *Buffer.

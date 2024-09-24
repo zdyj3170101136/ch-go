@@ -70,11 +70,15 @@ func (c *ColStr) Reset() {
 
 // EncodeColumn encodes String rows to *Buffer.
 func (c ColStr) EncodeColumn(b *Buffer) {
-	if b.Buf != nil {
-		b.Buffers = append(b.Buffers, b.Buf)
-		b.Buf = nil
+	if b.EnableWritev {
+		if b.Buf != nil {
+			b.Buffers = append(b.Buffers, b.Buf)
+			b.Buf = nil
+		}
+		b.Buffers = append(b.Buffers, c.Buf)
+	} else {
+		b.Buf = append(b.Buf, c.Buf...)
 	}
-	b.Buffers = append(b.Buffers, c.Buf)
 }
 
 // ForEach calls f on each string from column.

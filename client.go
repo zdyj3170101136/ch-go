@@ -495,6 +495,9 @@ func Connect(ctx context.Context, conn net.Conn, opt Options) (*Client, error) {
 		c.compression = proto.CompressionDisabled
 	}
 
+	if c.compression == proto.CompressionDisabled {
+		c.buf.EnableWritev = true
+	}
 	handshakeCtx, cancel := context.WithTimeout(ctx, opt.HandshakeTimeout)
 	defer cancel()
 	if err := c.handshake(handshakeCtx); err != nil {
