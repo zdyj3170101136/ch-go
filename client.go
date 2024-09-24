@@ -258,7 +258,7 @@ func (c *Client) flushBuf(ctx context.Context, b *proto.Buffer) error {
 	if err := ctx.Err(); err != nil {
 		return errors.Wrap(err, "context")
 	}
-	if len(b.Buf) == 0 {
+	if len(b.Buf) == 0 && len(b.CompressedBuf) == 0 {
 		// Nothing to flush.
 		return nil
 	}
@@ -273,7 +273,8 @@ func (c *Client) flushBuf(ctx context.Context, b *proto.Buffer) error {
 		n   int
 		err error
 	)
-	if c.compression == proto.CompressionEnabled {
+	if len(b.CompressedBuf) != 0 {
+		// handshake is not compressed.
 		n, err = c.conn.Write(b.CompressedBuf)
 	} else {
 		var n64 int64
