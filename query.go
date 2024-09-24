@@ -1,6 +1,7 @@
 package ch
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -279,8 +280,6 @@ func (c *Client) encodeBlock(ctx context.Context, tableName string, input []prot
 	}
 	clientData.EncodeAware(c.buf, c.protocolVersion)
 
-	// Saving offset of compressible data.
-	start := len(c.buf.Buf)
 	b := proto.Block{
 		Columns: len(input),
 	}
@@ -301,12 +300,20 @@ func (c *Client) encodeBlock(ctx context.Context, tableName string, input []prot
 	// Note: only blocks are compressed.
 	// See "Compressible" method of server or client code for reference.
 	if c.compression == proto.CompressionEnabled {
-		// TODO SUPPORT COMPRESS
-		data := c.buf.Buf[start:]
+		// encode last block
+		c.buf.Buffers = append(c.buf.Buffers, c.buf.Buf)
+		var b bytes.Buffer
+		_, err := c.buf.Buffers.WriteTo(&b)
+		if err != nil {
+			return errors.Wrap(err, "write to bytes.Buffer")
+		}
+		data := b.Bytes()
 		if err := c.compressor.Compress(c.compressionMethod, data); err != nil {
 			return errors.Wrap(err, "compress")
 		}
-		c.buf.Buf = append(c.buf.Buf[:start], c.compressor.Data...)
+		c.buf.CompressedBuf = append(c.buf.CompressedBuf, c.compressor.Data...)
+		c.buf.Buffers = nil
+		c.buf.Buf = c.buf.Buf[:0]
 	}
 
 	return nil

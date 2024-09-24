@@ -12,6 +12,7 @@ import (
 type Buffer struct {
 	Buf []byte
 	net.Buffers
+	CompressedBuf []byte
 }
 
 // Reader returns new *Reader from *Buffer.
@@ -48,6 +49,7 @@ func (b *Buffer) Encode(e Encoder) {
 func (b *Buffer) Reset() {
 	b.Buf = b.Buf[:0]
 	b.Buffers = nil
+	b.CompressedBuf = b.CompressedBuf[:0]
 }
 
 // Read implements io.Reader.

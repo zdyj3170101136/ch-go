@@ -269,8 +269,18 @@ func (c *Client) flushBuf(ctx context.Context, b *proto.Buffer) error {
 		// Reset deadline.
 		defer func() { _ = c.conn.SetWriteDeadline(time.Time{}) }()
 	}
-	b.Buffers = append(b.Buffers, b.Buf)
-	n, err := b.Buffers.WriteTo(c.conn)
+	var (
+		n   int
+		err error
+	)
+	if c.compression == proto.CompressionEnabled {
+		n, err = c.conn.Write(b.CompressedBuf)
+	} else {
+		var n64 int64
+		b.Buffers = append(b.Buffers, b.Buf)
+		n64, err = b.Buffers.WriteTo(c.conn)
+		n = int(n64)
+	}
 	if err != nil {
 		return errors.Wrap(err, "write")
 	}
